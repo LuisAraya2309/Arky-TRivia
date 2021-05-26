@@ -14,7 +14,6 @@
     out_fn_prompt db 'Enter the output file name: ',0 
     in_file_err_msg db 'Input file open error.',0 
     out_file_err_msg db 'Cannot create output file.',0
-    mensaje db 'Hola',0
 
 .UDATA
     in_file_name resb 30
@@ -41,12 +40,12 @@
     mov [fd_in],EAX
 
     cmp EAX,0
-    jge create_file
+    jge read_file
     PutStr in_file_err_msg
     nwln
     jmp done
 
-    create_file:
+read_file:
 
     ;read input file
     mov EAX,3
@@ -57,10 +56,8 @@
     PutLInt EAX
     mov [bytesQty],EAX
 
-    close_exit:
-    mov EAX,6
-    mov EBX,[fd_in] 
-    int 80h
+    ;PutStr in_buf
+
     ;create output file
     mov EAX,8
     mov EBX,out_file_name
@@ -69,28 +66,34 @@
     mov [fd_out],EAX
 
     cmp EAX,0
-    jge repeat_read
+    jge write_file
     PutStr out_file_err_msg
     nwln 
     jmp close_exit
 
-repeat_read:
+write_file:
     
     ;write to ouput file
-    mov EDX,[bytesQty]
     mov EAX,4
     mov EBX,[fd_out]
-    mov ECX,mensaje
+    mov ECX,in_buf
+    mov EDX,[bytesQty]
     int 0x80
 
     cmp EDX,BUF_SIZE
     jl copy_done
 
-    jmp repeat_read
+    jmp write_file
+
 copy_done:
     mov EAX,6
     mov EBX,[fd_out]
 
+close_exit:
+    mov EAX,6
+    mov EBX,[fd_in]
 
-done: 
+
+done:
+    nwln 
     .EXIT
